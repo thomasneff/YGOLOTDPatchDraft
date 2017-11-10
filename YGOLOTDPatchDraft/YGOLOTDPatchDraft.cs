@@ -500,24 +500,6 @@ namespace YGOPRODraft
 			}
 
 
-			//Check ChosenPacks/ChosenDecks
-			if(programSettings.ChosenPacksDictionaryJSON != "")
-			{
-				ChosenPacks = JsonConvert.DeserializeObject<Dictionary<string, bool>>(programSettings.ChosenPacksDictionaryJSON);
-			}
-
-			UpdateChosenList(chkListBoxPacks, ChosenPacks, CONSTANTS.ADD_PACKS_FOLDER, "", false);
-			programSettings.ChosenPacksDictionaryJSON = JsonConvert.SerializeObject(ChosenPacks);
-
-			//Check ChosenPacks/ChosenDecks
-			if (programSettings.ChosenDecksDictionaryJSON != "")
-			{
-				ChosenDecks = JsonConvert.DeserializeObject<Dictionary<string, bool>>(programSettings.ChosenDecksDictionaryJSON);
-			}
-
-			UpdateChosenList(chkListBoxDecks, ChosenDecks, CONSTANTS.DECK_DATABASE, "", false);
-			programSettings.ChosenDecksDictionaryJSON = JsonConvert.SerializeObject(ChosenDecks);
-
 			//Check if cards.cdb is there
 			if (!CheckPathContainsFile("", CONSTANTS.CARD_DB_FILENAME))
 			{
@@ -649,6 +631,26 @@ namespace YGOPRODraft
 				TEMP_SETTINGS.CanCopyToGame = true;
 				LogOut("Patched deck/pack files in " + CONSTANTS.PATCHED_YGODATA_OUT_FOLDER + " found!");
 			}
+
+
+			//Check ChosenPacks/ChosenDecks
+			if (programSettings.ChosenPacksDictionaryJSON != "")
+			{
+				ChosenPacks = JsonConvert.DeserializeObject<Dictionary<string, bool>>(programSettings.ChosenPacksDictionaryJSON);
+			}
+
+			UpdateChosenList(chkListBoxPacks, ChosenPacks, CONSTANTS.ADD_PACKS_FOLDER, "", false);
+			programSettings.ChosenPacksDictionaryJSON = JsonConvert.SerializeObject(ChosenPacks);
+
+			//Check ChosenPacks/ChosenDecks
+			if (programSettings.ChosenDecksDictionaryJSON != "")
+			{
+				ChosenDecks = JsonConvert.DeserializeObject<Dictionary<string, bool>>(programSettings.ChosenDecksDictionaryJSON);
+			}
+
+			UpdateChosenList(chkListBoxDecks, ChosenDecks, CONSTANTS.DECK_DATABASE, "", false);
+			programSettings.ChosenDecksDictionaryJSON = JsonConvert.SerializeObject(ChosenDecks);
+
 		}
 
 		private void Form1_FormClosed(object sender, FormClosedEventArgs e)
