@@ -1,0 +1,88 @@
+Scrape the yugioh database with e.g. python, create a .csv file which maps CardName to CardNumber, then I can go from YGOPRO number to CardName to CardNumber
+Make command line tools so I can batch the packing automatically
+
+TODO:
+Tool to extract YGO: LOTD battle pack deck (ideally the one with most AI decks (bp1 > bp2 == bp2r2) OR with the most cards if expanding/shrinking doesn't work (bp2 > bp1 > bp2r2) to YGOPRO format.
+Tool to assemble YGOPRO "decks" and put them as a battle pack inside the zib file. If we can't find the card in the .csv database -> store it in a list and query later or add manually.
+  Automate all that stuff. Ideally, I just want to have a program which can do all the assembling/patching in one go. 
+  It should have at least a button for patching the battle pack with the data and automatically copying it into the YGO_DATA folder. 
+  It should also accept JSONs?
+  
+Make a combined tool which:
+ - on startup, check if paths are set, if the paths contain required files (YGO_DATA.dat, .exe, .csv, ...)
+   - unlock buttons if the required files are there. (e.g. unlock extract YGO_DATA only after YGO: LOTD path is set.)
+ - extracts YGO_DATA and stores your YGO: LOTD path inside an ini or something
+ - asks for your save path and stores that
+ - has a button to extract the draft deck from savegame.dat and store it in deck_database as ygopro decks. (In order to easily add new decks)
+   - therefore we need a method to convert 3 lists (main / extra / side) of card-IDs to 3 lists of ygopro IDs. (which is what the .csv does)
+ - contains cards.cdb and doesn't ask for it
+ - has an output folder which will contain versions of the files created
+ - automatically extracts packs.zib
+ - automatically patches battlepack 1 with the decks in the draft_cards folder
+ - automatically packs packs.zib
+ - automatically extracts decks.zib
+ - automatically 'randomizes' draft battle opponent decks
+ - automatically rebuilds YGO_DATA
+ - asks for copying it to your YGO: LOTD directory
+ - to be save - ban every card ID later than late 2016 (CID > 12500?)
+  
+YEAH, IT FUCKING WORKS!
+
+AI-DECKS: 
+CHECK if we can extend the number of AI decks in draft play -> just adding more decks doesn't crash, but doesn't add them either. Can't seem to expand that either.
+
+I don't know what the first 8 bytes of the .ydc files is - seems to have a few fixed values (8C 64, 0A 61, ...)
+
+
+PACKING:
+
+Cyclone -> zib folder to zib
+Copy zib to YGO_DATA folder
+Vortex -> YGO_DATA to dat
+
+
+NOTES:
+
+Changing Deck in decks.zib with HxD works
+
+Decks can be illegal (all Exodia pieces + only pot of greed left)
+
+Fixed Padding/File sizes in Relinquished/Cyclone. 
+
+SAVE NOTES:
+Definitely contains some checksum. Don't want to bother with that atm, but I don't need write access anyway. I only need read to read out the drafted deck again :)
+
+Battle Pack save data:
+22 bytes after "Battle Pack: Epic Dawn":
+  2 bytes main-deck number of cards (== numBytes / 2)
+  2 bytes extra-deck size (== numBytes / 2)
+  2 bytes side-deck size (== numBytes / 2)
+then:
+  60 cards main-deck (0x0000 if no card) -> 120 bytes
+  15 cards extra-deck (0x0000 if no card) -> 30 bytes
+  15 cards side-deck (0x0000 if no card) -> 30 bytes
+  
+then afterwards: some junk, and then: cards you drafted
+
+
+
+PACK NOTES:
+Apparently they do rarity by simply adding multiples of cards?. 
+Extracting the .ydc works the same as extracting the .bin files, so the fixed Cyclone/Relinquished works for both decks and packs.
+
+Increasing the size by just adding cards -> everything breaks.
+
+The battlepack has 5 card categories -> categories are related to the draft: for each category, 3 cards are drawn. (5 x 3 cards = 15)
+
+<= 4 Categories: Works, but breaks because we need enough cards which we cannot get then.
+>= 6 Categories: Makes the game crash
+
+
+PACK HEADER:
+8 bytes "num" -> number of "categories" or offsets
+"num" x 8 bytes -> offsets leading to start of categories
+"num" blocks:
+  2 byte length -> number of cards in that block. (== numBytes / 2)
+  length x 2 byte cards -> card IDs (same as used on the official yugioh database)
+  
+You can extend those files past their initial size without issues. 
