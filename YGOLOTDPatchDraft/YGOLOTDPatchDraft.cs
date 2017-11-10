@@ -200,6 +200,7 @@ namespace YGOPRODraft
 
 				random_index = 2 * deck_idx + 1;
 				bpack_deck_name = CONSTANTS.AI_DECK_DRAFT_FILE_US + (deck_idx + 1).ToString("D3") + CONSTANTS.YDC_EXTENSION;
+				string sealed_deck_name = CONSTANTS.AI_SEALED_DECK_FILE + (deck_idx + 1).ToString("D3") + CONSTANTS.YDC_EXTENSION;
 
 				if (random_index < list_of_all_decks_ydk.Count)
 				{
@@ -207,6 +208,9 @@ namespace YGOPRODraft
 					int list_idx = random_index;
 
 					LogOut(FileUtilities.WriteYDCDeckFile(Path.Combine(CONSTANTS.PATCHED_YGODATA_OUT_FOLDER, bpack_deck_name),
+						list_of_all_decks_ydk[list_idx], card_name_to_LOTD_ID));
+
+					LogOut(FileUtilities.WriteYDCDeckFile(Path.Combine(CONSTANTS.PATCHED_YGODATA_OUT_FOLDER, sealed_deck_name),
 						list_of_all_decks_ydk[list_idx], card_name_to_LOTD_ID));
 				}
 				else
@@ -218,7 +222,14 @@ namespace YGOPRODraft
 					{
 						Writer.Write(list_of_ydc_decks[list_idx]);
 					}
+
+					using (var Writer = new BinaryWriter(File.Open(Path.Combine(CONSTANTS.PATCHED_YGODATA_OUT_FOLDER, sealed_deck_name), FileMode.OpenOrCreate, FileAccess.Write)))
+					{
+						Writer.Write(list_of_ydc_decks[list_idx]);
+					}
 				}
+
+				
 			}
 
 			//At this point, we should have all decks in our working folder.
@@ -233,9 +244,13 @@ namespace YGOPRODraft
 				bpack_deck_name = CONSTANTS.AI_DECK_DRAFT_FILE_US + (deck_idx + 1).ToString("D3") + CONSTANTS.YDC_EXTENSION;
 				File.Copy(Path.Combine(CONSTANTS.PATCHED_YGODATA_OUT_FOLDER, bpack_deck_name),
 					Path.Combine(CONSTANTS.YGODATA_DECKS + CONSTANTS.UNPACKED_SUFFIX, bpack_deck_name), true);
+
+				string sealed_deck_name = CONSTANTS.AI_SEALED_DECK_FILE + (deck_idx + 1).ToString("D3") + CONSTANTS.YDC_EXTENSION;
+				File.Copy(Path.Combine(CONSTANTS.PATCHED_YGODATA_OUT_FOLDER, sealed_deck_name),
+					Path.Combine(CONSTANTS.YGODATA_DECKS + CONSTANTS.UNPACKED_SUFFIX, sealed_deck_name), true);
 			}
 
-			LogOut("Copied shuffled draft decks to working folder!", Color.Blue);
+			LogOut("Copied shuffled draft/sealed decks to working folder!", Color.Blue);
 
 			//Pack decks.zib
 			LogOut(Cyclone.PackZibFile(CONSTANTS.YGODATA_DECKS + CONSTANTS.UNPACKED_SUFFIX,

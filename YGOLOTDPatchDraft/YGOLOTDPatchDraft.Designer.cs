@@ -48,6 +48,8 @@
 			this.chkAllPacks = new System.Windows.Forms.CheckBox();
 			this.chkOnlyShowChosenDecks = new System.Windows.Forms.CheckBox();
 			this.chkOnlyShowChosenPacks = new System.Windows.Forms.CheckBox();
+			this.label4 = new System.Windows.Forms.Label();
+			this.label5 = new System.Windows.Forms.Label();
 			this.SuspendLayout();
 			// 
 			// txtDebugOut
@@ -253,11 +255,33 @@
 			this.chkOnlyShowChosenPacks.UseVisualStyleBackColor = true;
 			this.chkOnlyShowChosenPacks.CheckedChanged += new System.EventHandler(this.chkOnlyShowChosenPacks_CheckedChanged);
 			// 
+			// label4
+			// 
+			this.label4.AutoSize = true;
+			this.label4.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+			this.label4.Location = new System.Drawing.Point(437, 6);
+			this.label4.Name = "label4";
+			this.label4.Size = new System.Drawing.Size(58, 20);
+			this.label4.TabIndex = 29;
+			this.label4.Text = "Decks:";
+			// 
+			// label5
+			// 
+			this.label5.AutoSize = true;
+			this.label5.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+			this.label5.Location = new System.Drawing.Point(671, 6);
+			this.label5.Name = "label5";
+			this.label5.Size = new System.Drawing.Size(56, 20);
+			this.label5.TabIndex = 30;
+			this.label5.Text = "Packs:";
+			// 
 			// YGOLOTDPatchDraft
 			// 
 			this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
 			this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
 			this.ClientSize = new System.Drawing.Size(897, 519);
+			this.Controls.Add(this.label5);
+			this.Controls.Add(this.label4);
 			this.Controls.Add(this.chkOnlyShowChosenPacks);
 			this.Controls.Add(this.chkOnlyShowChosenDecks);
 			this.Controls.Add(this.chkAllPacks);
@@ -308,6 +332,8 @@
 		private System.Windows.Forms.CheckBox chkOnlyShowChosenPacks;
 		private System.Windows.Forms.CheckBox chkAllPacks;
 		private System.Windows.Forms.CheckBox chkAllDecks;
+		private System.Windows.Forms.Label label4;
+		private System.Windows.Forms.Label label5;
 	}
 }
 

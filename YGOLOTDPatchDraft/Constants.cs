@@ -23,6 +23,7 @@ namespace YGOPRODraft
 		public String CARDS_NOT_AVAILABLE = "list_of_not_available_cards.txt";
 		public String DECK_DATABASE = "DECK_DATABASE";
 		public String AI_DECK_DRAFT_FILE_EU = "bp1_draft_eu";
+		public String AI_SEALED_DECK_FILE = "bp1_sealed_us";
 		public int MAX_AI_DRAFT_INDEX = 10;
 		public int MIN_AI_DRAFT_INDEX = 1;
 		public long BATTLEPACK_NUM_CATEGORIES = 5;
