@@ -121,7 +121,7 @@ namespace YGOPRODraft
                 var LineData = Line.Split(' '); //Split Into Chunks.
                 LocalVarFiles.Add(new FileNames(LineData[2])); //Add To List For Manip.
             }
-
+			Reader.Close();
             return LocalVarFiles;
         }
 

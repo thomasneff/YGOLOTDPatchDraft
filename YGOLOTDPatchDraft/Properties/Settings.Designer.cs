@@ -70,5 +70,41 @@ namespace YGOPRODraft.Properties {
                 this["ChosenPacksDictionaryJSON"] = value;
             }
         }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("False")]
+        public bool ShowOnlyCheckedDecks {
+            get {
+                return ((bool)(this["ShowOnlyCheckedDecks"]));
+            }
+            set {
+                this["ShowOnlyCheckedDecks"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("False")]
+        public bool ShowOnlyCheckedPacks {
+            get {
+                return ((bool)(this["ShowOnlyCheckedPacks"]));
+            }
+            set {
+                this["ShowOnlyCheckedPacks"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("True")]
+        public bool SimulateRarity {
+            get {
+                return ((bool)(this["SimulateRarity"]));
+            }
+            set {
+                this["SimulateRarity"] = value;
+            }
+        }
     }
 }

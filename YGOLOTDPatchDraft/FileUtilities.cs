@@ -52,8 +52,7 @@ namespace YGOPRODraft
 		/// <returns>byte array in LOTD Deck format</returns>
 		public static byte[] ExtractBattlePack1FromSaveData(byte[] savegame)
 		{
-			byte[] data = new byte[0];
-
+			
 			//search for "Battle Pack Epic Dawn"
 			byte[] search_pattern = new byte[] { 0x42 ,0x00 ,0x61 ,0x00 ,0x74 ,0x00 ,0x74 ,0x00 ,0x6C ,0x00 ,0x65 ,0x00 ,0x20 ,0x00
 				,0x50 ,0x00 ,0x61 ,0x00 ,0x63 ,0x00 ,0x6B ,0x00 ,0x3A ,0x00 ,0x20 ,0x00 ,0x45 ,0x00 ,0x70 ,0x00 ,0x69 ,0x00 ,0x63 ,0x00 ,0x20 ,0x00 ,0x44 ,0x00 ,0x61 ,0x00 ,0x77 ,0x00 ,0x6E };
@@ -119,7 +118,7 @@ namespace YGOPRODraft
 				ydc_bytes = MemWriter.ToArray();
 			}
 
-			return data;
+			return ydc_bytes;
 		}
 
 		/// <summary>
@@ -213,7 +212,7 @@ namespace YGOPRODraft
 		/// </summary>
 		/// <param name="fileName">file location of LOTD deck</param>
 		/// <returns>byte array containing .ydc data</returns>
-		private static byte[] parseCardListMainExtraSideFromYDCFile(string fileName)
+		public static byte[] parseCardListMainExtraSideFromYDCFile(string fileName)
 		{
 			return File.ReadAllBytes(fileName);
 		}
@@ -434,6 +433,83 @@ namespace YGOPRODraft
 		}
 
 		/// <summary>
+		/// Simply switches key/value in the Dictionary.
+		/// </summary>
+		/// <param name="originalDictionary"></param>
+		/// <returns></returns>
+		public static Dictionary<string, string> ReverseDict(Dictionary<string, string> originalDictionary)
+		{
+			Dictionary<string, string> new_dict = new Dictionary<string, string>();
+
+			foreach(var kp in originalDictionary)
+			{
+				if(kp.Value != "65565")
+				{
+					new_dict.Add(kp.Value, kp.Key);
+				}
+			}
+			return new_dict;
+		}
+
+
+
+		/// <summary>
+		/// Converts a YDC/LOTD binary deck file to lists (main/extra/side) of YGOPROCards
+		/// </summary>
+		/// <param name="ydc_binary">all bytes containing the ydc binary</param>
+		/// <param name="LOTD_ID_to_card_name">dictionary mapping from LOTD ID to card name</param>
+		/// <param name="card_db_filename">cards.cdb file location (from YGOPRO to look up card data)</param>
+		/// <returns></returns>
+		public static List<List<YGOPROCard>> YDCToYGOPRODeck(byte[] ydc_binary, Dictionary<string, string> LOTD_ID_to_card_name, string card_db_filename)
+		{
+			List<List<YGOPROCard>> cards = new List<List<YGOPROCard>>();
+			//cards.Add(new List<YGOPROCard>());
+			//cards.Add(new List<YGOPROCard>());
+			//cards.Add(new List<YGOPROCard>());
+
+			List<string> card_names = new List<string>();
+
+
+
+			using (var MemReader = new MemoryStream(ydc_binary))
+			{
+				using (var Reader = new BinaryReader(MemReader))
+				{
+					//Read LOTD IDs from ydc_binary
+
+					//Read Header
+					Reader.ReadInt64();
+
+					//Iterate over main/extra/side
+					for(int deck_index = 0; deck_index < 3; deck_index++)
+					{
+						int num_main_cards = Reader.ReadInt16();
+
+						for (int i = 0; i < num_main_cards; i++)
+						{
+							try
+							{
+								//cards[deck_index].Add()
+								card_names.Add(LOTD_ID_to_card_name[Reader.ReadInt16().ToString()]);
+							}
+							catch (Exception ex)
+							{
+
+							}
+						}
+
+						cards.Add(YGOPROCard.query_ygopro_ids_from_names(card_names, card_db_filename));
+
+					}
+					
+
+				}
+					
+			}
+
+			return cards;
+		}
+		/// <summary>
 		/// Writes a given main/extra/side YGOPRO deck list to a binary .ydc file, readable by LOTD.
 		/// </summary>
 		/// <param name="filename">output file name for the .ydc file</param>
@@ -448,75 +524,36 @@ namespace YGOPRODraft
 			{
 				//I don't know what the first 8 bytes do, just write what they contain by default
 				Writer.Write(header_byte);
-
-				//Write main deck
-				Writer.Write((Int16)(list_of_card_lists[0].Count));
-				foreach (YGOPROCard card in list_of_card_lists[0])
+				int[] default_card_ids = { 4844, 11385, 4844 };
+				for(int deck_index = 0; deck_index < 3; deck_index++)
 				{
-					try
+					//Write deck
+					Writer.Write((Int16)(list_of_card_lists[deck_index].Count));
+
+				
+
+					foreach (YGOPROCard card in list_of_card_lists[deck_index])
 					{
-						if (Int32.Parse(card_name_to_LOTD_ID[card.m_card_name]) == 65565)
+						try
 						{
-							ret += ("Error: Card ID is set to 65565 - this means card_map.csv has an error for card " + card.m_card_name + ". (Adding Pot of Greed instead)") + Environment.NewLine;
-							Writer.Write((Int16)4844);
+							if (Int32.Parse(card_name_to_LOTD_ID[card.m_card_name]) == 65565)
+							{
+								ret += ("Error: Card ID is set to 65565 - this means card_map.csv has an error for card " + card.m_card_name + ". (Adding Pot of Greed instead)") + Environment.NewLine;
+								Writer.Write((Int16)default_card_ids[deck_index]);
+							}
+							else
+							{
+								Writer.Write(Int16.Parse(card_name_to_LOTD_ID[card.m_card_name]));
+							}
 						}
-						else
+						catch (Exception ex)
 						{
-							Writer.Write(Int16.Parse(card_name_to_LOTD_ID[card.m_card_name]));
+							ret += ("Error: couldn't find card " + card.m_card_name + " in database - maybe LOTD does not support it? (Adding Pot of Greed instead)") + Environment.NewLine;
+							Writer.Write((Int16)default_card_ids[deck_index]);
 						}
-					}
-					catch (Exception ex)
-					{
-						ret += ("Error: couldn't find card " + card.m_card_name + " in database - maybe LOTD does not support it? (Adding Pot of Greed instead)") + Environment.NewLine;
-						Writer.Write((Int16)4844);
 					}
 				}
-
-				//Write extra deck
-				Writer.Write((Int16)(list_of_card_lists[1].Count));
-				foreach (YGOPROCard card in list_of_card_lists[1])
-				{
-					try
-					{
-						if (Int32.Parse(card_name_to_LOTD_ID[card.m_card_name]) == 65565)
-						{
-							ret += ("Error: Card ID is set to 65565 - this means card_map.csv has an error for card " + card.m_card_name + ". (Adding Dark Rebellion Xyz Dragon instead)") + Environment.NewLine;
-							Writer.Write((Int16)11385);
-						}
-						else
-						{
-							Writer.Write(Int16.Parse(card_name_to_LOTD_ID[card.m_card_name]));
-						}
-					}
-					catch (Exception ex)
-					{
-						ret += ("Error: couldn't find card " + card.m_card_name + " in database - maybe LOTD does not support it? (Adding Dark Rebellion Xyz Dragon instead)") + Environment.NewLine;
-						Writer.Write((Int16)11385);
-					}
-				}
-
-				//Write side deck
-				Writer.Write((Int16)(list_of_card_lists[2].Count));
-				foreach (YGOPROCard card in list_of_card_lists[2])
-				{
-					try
-					{
-						if (Int32.Parse(card_name_to_LOTD_ID[card.m_card_name]) == 65565)
-						{
-							ret += ("Error: Card ID is set to 65565 - this means card_map.csv has an error for card " + card.m_card_name + ". (Adding Pot of Greed instead)") + Environment.NewLine;
-							Writer.Write((Int16)4844);
-						}
-						else
-						{
-							Writer.Write(Int16.Parse(card_name_to_LOTD_ID[card.m_card_name]));
-						}
-					}
-					catch (Exception ex)
-					{
-						ret += ("Error: couldn't find card " + card.m_card_name + " in database - maybe LOTD does not support it? (Adding Pot of Greed instead)") + Environment.NewLine;
-						Writer.Write((Int16)4844);
-					}
-				}
+				
 			}
 
 			return ret;

@@ -13,11 +13,11 @@ namespace YGOPRODraft
 		#region Private Fields
 
 		private static Random rng = new Random();
+		private Dictionary<string, bool> ChosenDecks = new Dictionary<string, bool>();
+		private Dictionary<string, bool> ChosenPacks = new Dictionary<string, bool>();
 		private Constants CONSTANTS = new Constants();
 		private Properties.Settings programSettings = Properties.Settings.Default;
 		private TempSettings TEMP_SETTINGS = new TempSettings();
-		private Dictionary<string, bool> ChosenPacks = new Dictionary<string, bool>();
-		private Dictionary<string, bool> ChosenDecks = new Dictionary<string, bool>();
 
 		#endregion Private Fields
 
@@ -29,8 +29,6 @@ namespace YGOPRODraft
 		}
 
 		#endregion Public Constructors
-
-
 
 		#region Private Methods
 
@@ -134,7 +132,6 @@ namespace YGOPRODraft
 			List<List<List<YGOPROCard>>> list_of_all_decks_ydk;
 			List<byte[]> list_of_ydc_decks;
 
-
 			//Get lists of random decks
 			FileUtilities.GetRandomDecksFromFolder(CONSTANTS.DECK_DATABASE, CONSTANTS.CARD_DB_FILENAME, CONSTANTS.CARDS_NOT_AVAILABLE,
 				CONSTANTS.MAX_AI_DRAFT_INDEX * 2, CONSTANTS.YDK_EXTENSION,
@@ -184,7 +181,6 @@ namespace YGOPRODraft
 
 					LogOut(FileUtilities.WriteYDCDeckFile(Path.Combine(CONSTANTS.PATCHED_YGODATA_OUT_FOLDER, bpack_deck_name),
 						list_of_all_decks_ydk[list_idx], card_name_to_LOTD_ID));
-
 				}
 				else
 				{
@@ -192,10 +188,7 @@ namespace YGOPRODraft
 					int list_idx = random_index - list_of_all_decks_ydk.Count;
 
 					//Write raw binary
-					using (var Writer = new BinaryWriter(File.Open(Path.Combine(CONSTANTS.PATCHED_YGODATA_OUT_FOLDER, bpack_deck_name), FileMode.OpenOrCreate, FileAccess.Write)))
-					{
-						Writer.Write(list_of_ydc_decks[list_idx]);
-					}
+					File.WriteAllBytes(Path.Combine(CONSTANTS.PATCHED_YGODATA_OUT_FOLDER, bpack_deck_name), list_of_ydc_decks[list_idx]);
 				}
 
 				random_index = 2 * deck_idx + 1;
@@ -218,18 +211,10 @@ namespace YGOPRODraft
 					//Take YDC Deck
 					int list_idx = random_index - list_of_all_decks_ydk.Count;
 
-					using (var Writer = new BinaryWriter(File.Open(Path.Combine(CONSTANTS.PATCHED_YGODATA_OUT_FOLDER, bpack_deck_name), FileMode.OpenOrCreate, FileAccess.Write)))
-					{
-						Writer.Write(list_of_ydc_decks[list_idx]);
-					}
+					File.WriteAllBytes(Path.Combine(CONSTANTS.PATCHED_YGODATA_OUT_FOLDER, bpack_deck_name), list_of_ydc_decks[list_idx]);
 
-					using (var Writer = new BinaryWriter(File.Open(Path.Combine(CONSTANTS.PATCHED_YGODATA_OUT_FOLDER, sealed_deck_name), FileMode.OpenOrCreate, FileAccess.Write)))
-					{
-						Writer.Write(list_of_ydc_decks[list_idx]);
-					}
+					File.WriteAllBytes(Path.Combine(CONSTANTS.PATCHED_YGODATA_OUT_FOLDER, sealed_deck_name), list_of_ydc_decks[list_idx]);
 				}
-
-				
 			}
 
 			//At this point, we should have all decks in our working folder.
@@ -278,7 +263,7 @@ namespace YGOPRODraft
 
 			foreach (string filename in files)
 			{
-				if(ChosenPacks[filename.Split('\\')[1]] == false)
+				if (ChosenPacks[filename.Split('\\')[1]] == false)
 				{
 					continue;
 				}
@@ -292,25 +277,44 @@ namespace YGOPRODraft
 				{
 					cards = FileUtilities.cardsFromJSON(filename, CONSTANTS.CARD_DB_FILENAME, chkJSONRarity.Checked);
 				}
+				else if (filename.Contains(CONSTANTS.YDC_EXTENSION))
+				{
+					try
+					{
+						byte[] ydc_binary = FileUtilities.parseCardListMainExtraSideFromYDCFile(filename);
+						var list_of_main_extra_side = FileUtilities.YDCToYGOPRODeck(ydc_binary,
+							FileUtilities.ReverseDict(FileUtilities.GetCardIDToLOTDMapFromCSV(CONSTANTS.CSV_MAP_FILENAME)),
+							CONSTANTS.CARD_DB_FILENAME);
+						foreach (var deck in list_of_main_extra_side)
+						{
+							cards.AddRange(deck);
+						}
+					}
+					catch (Exception ex)
+					{
+						LogOut("Error: couldn't read " + filename + " for pack data!");
+						continue;
+					}
+				}
 				else
 				{
 					LogOut("Error: didn't recognize extension of " + filename + " as a valid draft pack file!");
+					continue;
 				}
 
 				list_of_card_lists.Add(cards);
 			}
 
-			if(list_of_card_lists.Count == 0)
+			if (list_of_card_lists.Count == 0)
 			{
 				LogOut("Error: no packs selected - please select at least 1!");
 				return;
 			}
-		
+
 			var card_name_to_LOTD_ID = FileUtilities.GetCardIDToLOTDMapFromCSV(CONSTANTS.CSV_MAP_FILENAME);
 
 			LogOut(FileUtilities.WriteBattlePackBinFile(Path.Combine(CONSTANTS.PATCHED_YGODATA_OUT_FOLDER, CONSTANTS.BATTLEPACK_1_FILENAME),
 				CONSTANTS.BATTLEPACK_NUM_CATEGORIES, list_of_card_lists, card_name_to_LOTD_ID));
-			
 
 			LogOut("Created " + Path.Combine(CONSTANTS.PATCHED_YGODATA_OUT_FOLDER, CONSTANTS.BATTLEPACK_1_FILENAME) + " successfully!");
 			//Copy it to the working folder
@@ -352,8 +356,6 @@ namespace YGOPRODraft
 			LogOut(Relinquished.UnpackDecksAndPacks(CONSTANTS));
 		}
 
-		
-
 		private bool CheckPathContainsFile(string path, string file)
 		{
 			return File.Exists(Path.Combine(path, file));
@@ -383,71 +385,6 @@ namespace YGOPRODraft
 				TEMP_SETTINGS.CanExtractSave = true;
 			}
 			programSettings.Save();
-		}
-
-		/// <summary>
-		/// Updates a CheckedListBox based on items in a folder and a dictionary. Also updates the dictonary.
-		/// </summary>
-		/// <param name="clb">CheckedListBox to update</param>
-		/// <param name="checked_items">Dictionary containing checked/unchecked items</param>
-		/// <param name="folder_path">Path to query files from</param>
-		/// <param name="filter_string">Only filenames matching the filter_string are added</param>
-		/// <param name="only_show_chosen">Only show files which are ticked</param>
-		private void UpdateChosenList(CheckedListBox clb, Dictionary<string, bool> checked_items, string folder_path, string filter_string, bool only_show_chosen)
-		{
-			string[] files = Directory.GetFiles(folder_path);
-
-			clb.Items.Clear();
-
-			List<string> filtered_filenames = new List<string>();
-			
-			//Filter queried files
-			if(filter_string != "")
-			{
-				foreach (string file in files)
-				{
-					if(file.ToLower().Contains(filter_string.ToLower()))
-					{
-						filtered_filenames.Add(file);
-					}
-				}
-			}
-			else
-			{
-				filtered_filenames.AddRange(files);
-			}
-
-			//For each item, add the checked state if found in Dictionary
-			foreach (string file in filtered_filenames)
-			{
-				string file_split = file.Split('\\')[1];
-				if(checked_items.ContainsKey(file_split))
-				{
-					if(only_show_chosen)
-					{
-						if(checked_items[file_split] == true)
-						{
-							clb.Items.Add(file_split, checked_items[file_split]);
-						}
-					}
-					else
-					{
-						clb.Items.Add(file_split, checked_items[file_split]);
-					}
-					
-				}
-				else
-				{
-					//Dictionary entry is not there -> file is new. Add entry
-					checked_items.Add(file_split, false);
-					if(only_show_chosen == false)
-					{
-						clb.Items.Add(file_split, false);
-					}
-					
-				}
-			}
-		//	clb.Update();
 		}
 
 		private void CheckSettings()
@@ -498,7 +435,6 @@ namespace YGOPRODraft
 			{
 				LogOut("card_map.csv found!");
 			}
-
 
 			//Check if cards.cdb is there
 			if (!CheckPathContainsFile("", CONSTANTS.CARD_DB_FILENAME))
@@ -632,7 +568,6 @@ namespace YGOPRODraft
 				LogOut("Patched deck/pack files in " + CONSTANTS.PATCHED_YGODATA_OUT_FOLDER + " found!");
 			}
 
-
 			//Check ChosenPacks/ChosenDecks
 			if (programSettings.ChosenPacksDictionaryJSON != "")
 			{
@@ -651,6 +586,10 @@ namespace YGOPRODraft
 			UpdateChosenList(chkListBoxDecks, ChosenDecks, CONSTANTS.DECK_DATABASE, "", false);
 			programSettings.ChosenDecksDictionaryJSON = JsonConvert.SerializeObject(ChosenDecks);
 
+			chkOnlyShowChosenDecks.Checked = programSettings.ShowOnlyCheckedDecks;
+			chkOnlyShowChosenPacks.Checked = programSettings.ShowOnlyCheckedPacks;
+			chkJSONRarity.Checked = programSettings.SimulateRarity;
+
 		}
 
 		private void Form1_FormClosed(object sender, FormClosedEventArgs e)
@@ -665,7 +604,7 @@ namespace YGOPRODraft
 
 		private void LogOut(string text, Color? c = null)
 		{
-			if(text == "")
+			if (text == "")
 			{
 				return;
 			}
@@ -683,7 +622,7 @@ namespace YGOPRODraft
 			txtDebugOut.SelectionLength = 0;
 
 			txtDebugOut.SelectionColor = (Color)c;
-			if(!text.EndsWith(Environment.NewLine))
+			if (!text.EndsWith(Environment.NewLine))
 			{
 				txtDebugOut.AppendText(text + "\n");
 			}
@@ -691,14 +630,73 @@ namespace YGOPRODraft
 			{
 				txtDebugOut.AppendText(text);
 			}
-			
+
 			txtDebugOut.SelectionColor = txtDebugOut.ForeColor;
 			txtDebugOut.Update();
 		}
-		
-		
 
-		
+		/// <summary>
+		/// Updates a CheckedListBox based on items in a folder and a dictionary. Also updates the dictonary.
+		/// </summary>
+		/// <param name="clb">CheckedListBox to update</param>
+		/// <param name="checked_items">Dictionary containing checked/unchecked items</param>
+		/// <param name="folder_path">Path to query files from</param>
+		/// <param name="filter_string">Only filenames matching the filter_string are added</param>
+		/// <param name="only_show_chosen">Only show files which are ticked</param>
+		private void UpdateChosenList(CheckedListBox clb, Dictionary<string, bool> checked_items, string folder_path, string filter_string, bool only_show_chosen)
+		{
+			string[] files = Directory.GetFiles(folder_path);
+
+			clb.Items.Clear();
+
+			List<string> filtered_filenames = new List<string>();
+
+			//Filter queried files
+			if (filter_string != "")
+			{
+				foreach (string file in files)
+				{
+					if (file.ToLower().Contains(filter_string.ToLower()))
+					{
+						filtered_filenames.Add(file);
+					}
+				}
+			}
+			else
+			{
+				filtered_filenames.AddRange(files);
+			}
+
+			//For each item, add the checked state if found in Dictionary
+			foreach (string file in filtered_filenames)
+			{
+				string file_split = file.Split('\\')[1];
+				if (checked_items.ContainsKey(file_split))
+				{
+					if (only_show_chosen)
+					{
+						if (checked_items[file_split] == true)
+						{
+							clb.Items.Add(file_split, checked_items[file_split]);
+						}
+					}
+					else
+					{
+						clb.Items.Add(file_split, checked_items[file_split]);
+					}
+				}
+				else
+				{
+					//Dictionary entry is not there -> file is new. Add entry
+					checked_items.Add(file_split, false);
+					if (only_show_chosen == false)
+					{
+						clb.Items.Add(file_split, false);
+					}
+				}
+			}
+			//	clb.Update();
+		}
 
 		#endregion Private Methods
 
@@ -722,8 +720,54 @@ namespace YGOPRODraft
 
 		#endregion Public Classes
 
+		private void chkAllDecks_CheckedChanged(object sender, EventArgs e)
+		{
+			var keys = ChosenDecks.Keys.ToList();
+			foreach (var key in keys)
+			{
+				if (key.ToLower().Contains(txtFilterDecks.Text.ToLower()))
+				{
+					ChosenDecks[key] = chkAllDecks.Checked;
+				}
+			}
+
+			UpdateChosenList(chkListBoxDecks, ChosenDecks, CONSTANTS.DECK_DATABASE, txtFilterDecks.Text, chkOnlyShowChosenDecks.Checked);
+
+			//Save programSettings
+			programSettings.ChosenDecksDictionaryJSON = JsonConvert.SerializeObject(ChosenDecks);
+			programSettings.Save();
+		}
+
+		private void chkAllPacks_CheckedChanged(object sender, EventArgs e)
+		{
+			var keys = ChosenPacks.Keys.ToList();
+			foreach (var key in keys)
+			{
+				if (key.ToLower().Contains(txtFilterPacks.Text.ToLower()))
+				{
+					ChosenPacks[key] = chkAllPacks.Checked;
+				}
+			}
+
+			UpdateChosenList(chkListBoxPacks, ChosenPacks, CONSTANTS.ADD_PACKS_FOLDER, txtFilterPacks.Text, chkOnlyShowChosenPacks.Checked);
+
+			//Save programSettings
+			programSettings.ChosenPacksDictionaryJSON = JsonConvert.SerializeObject(ChosenPacks);
+			programSettings.Save();
+		}
+
+		private void chkJSONRarity_CheckedChanged(object sender, EventArgs e)
+		{
+			programSettings.SimulateRarity = chkJSONRarity.Checked;
+			programSettings.Save();
+		}
+
 		private void chkListBoxDecks_SelectedIndexChanged(object sender, EventArgs e)
 		{
+			if (chkListBoxDecks.SelectedItem == null)
+			{
+				return;
+			}
 			//Add change to dictionary
 			ChosenDecks[chkListBoxDecks.SelectedItem.ToString()] = chkListBoxDecks.GetItemChecked(chkListBoxDecks.SelectedIndex);
 
@@ -736,7 +780,10 @@ namespace YGOPRODraft
 
 		private void chkListBoxPacks_SelectedIndexChanged(object sender, EventArgs e)
 		{
-
+			if (chkListBoxPacks.SelectedItem == null)
+			{
+				return;
+			}
 			//Add change to dictionary
 			ChosenPacks[chkListBoxPacks.SelectedItem.ToString()] = chkListBoxPacks.GetItemChecked(chkListBoxPacks.SelectedIndex);
 
@@ -747,44 +794,26 @@ namespace YGOPRODraft
 			programSettings.Save();
 		}
 
+		private void chkOnlyShowChosenDecks_CheckedChanged(object sender, EventArgs e)
+		{
+			UpdateChosenList(chkListBoxDecks, ChosenDecks, CONSTANTS.DECK_DATABASE, txtFilterDecks.Text, chkOnlyShowChosenDecks.Checked);
+			programSettings.ShowOnlyCheckedDecks = chkOnlyShowChosenDecks.Checked;
+			programSettings.Save();
+		}
+
+		private void chkOnlyShowChosenPacks_CheckedChanged(object sender, EventArgs e)
+		{
+			UpdateChosenList(chkListBoxPacks, ChosenPacks, CONSTANTS.ADD_PACKS_FOLDER, txtFilterPacks.Text, chkOnlyShowChosenPacks.Checked);
+			programSettings.ShowOnlyCheckedPacks = chkOnlyShowChosenPacks.Checked;
+			programSettings.Save();
+		}
+
 		private void txtFilterDecks_TextChanged(object sender, EventArgs e)
 		{
 			UpdateChosenList(chkListBoxDecks, ChosenDecks, CONSTANTS.DECK_DATABASE, txtFilterDecks.Text, chkOnlyShowChosenDecks.Checked);
 		}
 
 		private void txtFilterPacks_TextChanged(object sender, EventArgs e)
-		{
-			UpdateChosenList(chkListBoxPacks, ChosenPacks, CONSTANTS.ADD_PACKS_FOLDER, txtFilterPacks.Text, chkOnlyShowChosenPacks.Checked);
-		}
-
-		private void chkAllDecks_CheckedChanged(object sender, EventArgs e)
-		{
-			var keys = ChosenDecks.Keys.ToList();
-			foreach (var key in keys)
-			{
-				ChosenDecks[key] = chkAllDecks.Checked;
-			}
-
-			UpdateChosenList(chkListBoxDecks, ChosenDecks, CONSTANTS.DECK_DATABASE, txtFilterDecks.Text, chkOnlyShowChosenDecks.Checked);
-		}
-
-		private void chkOnlyShowChosenDecks_CheckedChanged(object sender, EventArgs e)
-		{
-			UpdateChosenList(chkListBoxDecks, ChosenDecks, CONSTANTS.DECK_DATABASE, txtFilterDecks.Text, chkOnlyShowChosenDecks.Checked);
-		}
-
-		private void chkAllPacks_CheckedChanged(object sender, EventArgs e)
-		{
-			var keys = ChosenPacks.Keys.ToList();
-			foreach (var key in keys)
-			{
-				ChosenPacks[key] = chkAllPacks.Checked;
-			}
-
-			UpdateChosenList(chkListBoxPacks, ChosenPacks, CONSTANTS.ADD_PACKS_FOLDER, txtFilterPacks.Text, chkOnlyShowChosenPacks.Checked);
-		}
-
-		private void chkOnlyShowChosenPacks_CheckedChanged(object sender, EventArgs e)
 		{
 			UpdateChosenList(chkListBoxPacks, ChosenPacks, CONSTANTS.ADD_PACKS_FOLDER, txtFilterPacks.Text, chkOnlyShowChosenPacks.Checked);
 		}

@@ -133,7 +133,6 @@ namespace YGOPRODraft
 		{
 			List<YGOPROCard> cards = new List<YGOPROCard>();
 			List<int> ids = new List<int>();
-			List<YGOJSONStruct> successful_finds = new List<YGOJSONStruct>();
 			try
 			{
 				using (SQLiteConnection connect = new SQLiteConnection("Data Source=" + ygopro_path))
@@ -166,7 +165,6 @@ namespace YGOPRODraft
 										int a = r.GetInt32(0);
 										//ids.Add(a);
 										ids.Add(a);
-										successful_finds.Add(json_struct);
 									}
 								}
 							}
@@ -187,6 +185,66 @@ namespace YGOPRODraft
 				YGOPROCard card = QueryFromID(id, ygopro_path);
 				YGOJSONStruct json_struct = json_list[idx];
 				card.m_rarity = json_struct.rarity;
+				cards.Add(card);
+			}
+
+			return cards;
+		}
+
+		public static List<YGOPROCard> query_ygopro_ids_from_names(List<string> card_names, String ygopro_path)
+		{
+			List<YGOPROCard> cards = new List<YGOPROCard>();
+			List<int> ids = new List<int>();
+			try
+			{
+				using (SQLiteConnection connect = new SQLiteConnection("Data Source=" + ygopro_path))
+				{
+					connect.Open();
+					foreach (string name in card_names)
+					{
+						String new_name = name.Replace("'", "''");
+						using (SQLiteCommand fmd = connect.CreateCommand())
+						{
+							fmd.CommandText = "SELECT id from texts where name is '" + new_name + "'";
+							fmd.CommandType = CommandType.Text;
+
+							SQLiteDataReader r = fmd.ExecuteReader();
+							try
+							{
+								if (r.Read())
+								{
+									int a = r.GetInt32(0);
+									ids.Add(a);
+								}
+								else
+								{
+									fmd.CommandText = "SELECT id from texts where name like '%" + new_name + "%'";
+									fmd.CommandType = CommandType.Text;
+
+									r = fmd.ExecuteReader();
+									if (r.Read())
+									{
+										int a = r.GetInt32(0);
+										//ids.Add(a);
+										ids.Add(a);
+									}
+								}
+							}
+							catch
+							{
+							}
+						}
+					}
+				}
+			}
+			catch
+			{
+			}
+
+			for (int idx = 0; idx < ids.Count; idx++)
+			{
+				int id = ids[idx];
+				YGOPROCard card = QueryFromID(id, ygopro_path);
 				cards.Add(card);
 			}
 

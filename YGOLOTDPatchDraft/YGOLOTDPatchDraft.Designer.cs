@@ -144,6 +144,7 @@
 			this.chkJSONRarity.TabIndex = 16;
 			this.chkJSONRarity.Text = "Simulate Rarity (only .json)";
 			this.chkJSONRarity.UseVisualStyleBackColor = true;
+			this.chkJSONRarity.CheckedChanged += new System.EventHandler(this.chkJSONRarity_CheckedChanged);
 			// 
 			// btnPatchPackCopy
 			// 
@@ -161,6 +162,7 @@
 			// 
 			this.chkListBoxDecks.CheckOnClick = true;
 			this.chkListBoxDecks.FormattingEnabled = true;
+			this.chkListBoxDecks.HorizontalScrollbar = true;
 			this.chkListBoxDecks.Location = new System.Drawing.Point(441, 49);
 			this.chkListBoxDecks.Name = "chkListBoxDecks";
 			this.chkListBoxDecks.Size = new System.Drawing.Size(213, 184);
@@ -171,6 +173,7 @@
 			// 
 			this.chkListBoxPacks.CheckOnClick = true;
 			this.chkListBoxPacks.FormattingEnabled = true;
+			this.chkListBoxPacks.HorizontalScrollbar = true;
 			this.chkListBoxPacks.Location = new System.Drawing.Point(672, 49);
 			this.chkListBoxPacks.Name = "chkListBoxPacks";
 			this.chkListBoxPacks.Size = new System.Drawing.Size(213, 184);
