@@ -18,6 +18,7 @@ namespace YGOPRODraft
 		private Constants CONSTANTS = new Constants();
 		private Properties.Settings programSettings = Properties.Settings.Default;
 		private TempSettings TEMP_SETTINGS = new TempSettings();
+		private bool dont_update_list = false;
 
 		#endregion Private Fields
 
@@ -645,7 +646,22 @@ namespace YGOPRODraft
 		/// <param name="only_show_chosen">Only show files which are ticked</param>
 		private void UpdateChosenList(CheckedListBox clb, Dictionary<string, bool> checked_items, string folder_path, string filter_string, bool only_show_chosen)
 		{
+			clb.Enabled = false;
+			clb.Hide();
 			string[] files = Directory.GetFiles(folder_path);
+
+			int old_index = clb.SelectedIndex;
+
+			string old_item = "";
+			string old_top_item = "";
+
+			if (clb.SelectedItem != null)
+				old_item = clb.SelectedItem.ToString();
+
+			if (clb.Items.Count != 0)
+				old_top_item = clb.Items[clb.TopIndex].ToString();
+
+
 
 			clb.Items.Clear();
 
@@ -667,6 +683,10 @@ namespace YGOPRODraft
 				filtered_filenames.AddRange(files);
 			}
 
+			// We change the selected index here without wanting to fire the event handler again
+			dont_update_list = true;
+			int new_top_index = 0;
+
 			//For each item, add the checked state if found in Dictionary
 			foreach (string file in filtered_filenames)
 			{
@@ -678,12 +698,31 @@ namespace YGOPRODraft
 						if (checked_items[file_split] == true)
 						{
 							clb.Items.Add(file_split, checked_items[file_split]);
+							if (file_split == old_item)
+							{
+								clb.SelectedIndex = clb.Items.Count - 1;
+							}
+
+							if (file_split == old_top_item)
+							{
+								new_top_index = clb.Items.Count - 1;
+							}
 						}
 					}
 					else
 					{
 						clb.Items.Add(file_split, checked_items[file_split]);
+						if (file_split == old_item)
+						{
+							clb.SelectedIndex = clb.Items.Count - 1;
+						}
+
+						if (file_split == old_top_item)
+						{
+							new_top_index = clb.Items.Count - 1;
+						}
 					}
+					
 				}
 				else
 				{
@@ -692,10 +731,18 @@ namespace YGOPRODraft
 					if (only_show_chosen == false)
 					{
 						clb.Items.Add(file_split, false);
+						
 					}
 				}
+
+				
 			}
 			//	clb.Update();
+			dont_update_list = true;
+			clb.TopIndex = new_top_index;
+			dont_update_list = false;
+			clb.Enabled = true;
+			clb.Show();
 		}
 
 		#endregion Private Methods
@@ -764,6 +811,12 @@ namespace YGOPRODraft
 
 		private void chkListBoxDecks_SelectedIndexChanged(object sender, EventArgs e)
 		{
+			if (dont_update_list == true)
+			{
+				dont_update_list = false;
+				return;
+			}
+
 			if (chkListBoxDecks.SelectedItem == null)
 			{
 				return;
@@ -780,6 +833,12 @@ namespace YGOPRODraft
 
 		private void chkListBoxPacks_SelectedIndexChanged(object sender, EventArgs e)
 		{
+			if (dont_update_list == true)
+			{
+				dont_update_list = false;
+				return;
+			}
+
 			if (chkListBoxPacks.SelectedItem == null)
 			{
 				return;
