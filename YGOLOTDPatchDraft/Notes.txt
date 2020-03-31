@@ -44,3 +44,8 @@ PACK HEADER:
   length x 2 byte cards -> card IDs (same as used on the official yugioh database)
   
 You can extend those files past their initial size without issues. 
+
+
+about cards that are not available -> can extract them from card names bin files...
+
+need to use a different API for scraping the card_map.csv now. Should modify the script to only re-scrape the things that are either 65535 or simply not there

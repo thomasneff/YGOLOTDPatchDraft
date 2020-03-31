@@ -111,15 +111,16 @@ namespace YGOPRODraft
             Reader = new StreamReader(toc_file);
 
             Reader.ReadLine(); //Dispose First Line.
-            while (!Reader.EndOfStream)
+			char[] delim = new char[] { ' ' };
+			while (!Reader.EndOfStream)
             {
                 var Line = Reader.ReadLine();
                 if (Line == null) continue;
 
                 Line = Line.TrimStart(' '); //Trim Starting Spaces.
                 Line = Regex.Replace(Line, @"  +", " ", RegexOptions.Compiled); //Remove All Extra Spaces.
-                var LineData = Line.Split(' '); //Split Into Chunks.
-                LocalVarFiles.Add(new FileNames(LineData[2])); //Add To List For Manip.
+				var LineData = Line.Split(delim, 3); //Split Into Chunks.
+				LocalVarFiles.Add(new FileNames(LineData[2])); //Add To List For Manip.
             }
 			Reader.Close();
             return LocalVarFiles;

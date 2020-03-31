@@ -8,10 +8,10 @@ namespace YGOPRODraft
 {
 	public class Constants
 	{
-		public String LOTD_DAT_FILENAME = "YGO_DATA.dat";
-		public String LOTD_TOC_FILENAME = "YGO_DATA.toc";
+		public String LOTD_DAT_FILENAME = "YGO_2020.dat";
+		public String LOTD_TOC_FILENAME = "YGO_2020.toc";
 		public String LOTD_SAVE_FILENAME = "savegame.dat";
-		public String CSV_MAP_FILENAME = "card_map.csv";
+		public String CSV_MAP_FILENAME = "card_map_2020.csv";
 		public String CARD_DB_FILENAME = "cards.cdb";
 		public String BATTLEPACK_1_FILENAME = "bpack_BattlePack1.bin";
 		public String YGODATA_PACKS = "packs.zib";

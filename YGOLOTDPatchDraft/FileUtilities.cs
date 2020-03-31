@@ -263,6 +263,11 @@ namespace YGOPRODraft
 
 				foreach (YGOPROCard card_obj in cards)
 				{
+					if(card_obj.m_rarity == null)
+					{
+						card_obj.m_rarity = "Common";
+					}
+
 					if (card_obj.m_rarity.ToLower().Contains("common"))
 					{
 						rarity_adjusted_cards.Add(card_obj);
@@ -490,7 +495,8 @@ namespace YGOPRODraft
 							try
 							{
 								//cards[deck_index].Add()
-								card_names.Add(LOTD_ID_to_card_name[Reader.ReadInt16().ToString()]);
+								int reader_val = Reader.ReadInt16();
+								card_names.Add(LOTD_ID_to_card_name[reader_val.ToString()]);
 							}
 							catch (Exception ex)
 							{

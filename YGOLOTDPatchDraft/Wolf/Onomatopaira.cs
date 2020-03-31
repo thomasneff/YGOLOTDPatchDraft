@@ -20,7 +20,7 @@ namespace YGOPRODraft
 				{
 					var DatReader = new BinaryReader(File.Open(Path.Combine(Properties.Settings.Default.LOTDPath, strings.LOTD_DAT_FILENAME), FileMode.Open));
 					Reader.ReadLine(); //Dispose First Line.
-
+					char[] delim = new char[] { ' ' };
 					while (!Reader.EndOfStream)
 					{
 						var Line = Reader.ReadLine();
@@ -29,7 +29,7 @@ namespace YGOPRODraft
 						Line = Line.TrimStart(' '); //Trim Starting Spaces.
 						Line = Regex.Replace(Line, @"  +", " ",
 							RegexOptions.Compiled); //Remove All Extra Spaces.
-						var LineData = Line.Split(' '); //Split Into Chunks.
+						var LineData = Line.Split(delim, 3); //Split Into Chunks.
 
 						//Utilities.Log($"Extracting File: {new FileInfo(LineData[2]).Name} ({LineData[0]} Bytes)", Utilities.Event.Information);
 

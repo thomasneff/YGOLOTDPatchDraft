@@ -40,32 +40,11 @@ namespace YGOPRODraft
 
 				switch (ZibFileName)
 				{
-					case "cardcropHD400.jpg.zib":
-						OffsetReadSize = 8;
-						SizeReadSize = 8;
-						FileNameReadSize = 48;
-						DataStartOffset = 0x69F10;
-						break;
-
-					case "cardcropHD401.jpg.zib":
-						OffsetReadSize = 8;
-						SizeReadSize = 8;
-						FileNameReadSize = 48;
-						DataStartOffset = 0xC810;
-						break;
-
-					case "busts.zib":
-						OffsetReadSize = 4;
-						SizeReadSize = 4;
-						FileNameReadSize = 56;
-						DataStartOffset = 0x2390;
-						break;
-
 					case "decks.zib":
 						OffsetReadSize = 4;
 						SizeReadSize = 4;
 						FileNameReadSize = 56;
-						DataStartOffset = 0x8650;
+						DataStartOffset = 0xB1D0;
 						break;
 
 					case "packs.zib":
@@ -90,17 +69,10 @@ namespace YGOPRODraft
 
 							CurrentChunk = CurrentChunk.Skip(SizeReadSize).ToArray();
 							var CurrentFileName = Utilities.GetText(CurrentChunk.Take(FileNameReadSize).ToArray());
-
-							//Start Offset Is WRONG In ZIB For Some Reason, or maybe I am...
-							if (CurrentFileName == "adriangecko_neutral.png")
-								CurrentStartOffset = 0x2390;
-
-							//This also seems to be wrong in the decks zib file.
+							
 							if (CurrentFileName == "1classic_01a_yugimuto.ydc")
-								CurrentStartOffset = 0x8650;
-
-
-							//This also seems to be wrong in the packs zib file.
+								CurrentStartOffset = 0xB1D0;
+							
 							if (CurrentFileName == "bpack_BattlePack1.bin")
 								CurrentStartOffset = 0x750;
 
@@ -108,6 +80,8 @@ namespace YGOPRODraft
 
 							var SnapBack = Reader.BaseStream.Position;
 							Reader.BaseStream.Position = CurrentStartOffset;
+
+							System.Console.WriteLine("Current zib path: " + $"{zib_path}/" + CurrentFileName);
 							using (var Writer = new BinaryWriter(File.Open($"{zib_path}/" + CurrentFileName, FileMode.Create, FileAccess.Write)))
 							{
 								Writer.Write(Reader.ReadBytes(CurrentFileSize));

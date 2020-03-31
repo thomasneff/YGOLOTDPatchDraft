@@ -22,7 +22,7 @@ namespace YGOPRODraft
 		public String m_card_race;
 		public String m_card_type;
 		public Rectangle m_drawing_rect;
-		public String m_rarity;
+		public String m_rarity = "Common";
 		public int m_ygopro_id;
 
 		#endregion Public Fields
@@ -179,10 +179,12 @@ namespace YGOPRODraft
 			{
 			}
 
+			var card_list = QueryFromIDList(ids, ygopro_path);
+
 			for (int idx = 0; idx < ids.Count; idx++)
 			{
 				int id = ids[idx];
-				YGOPROCard card = QueryFromID(id, ygopro_path);
+				YGOPROCard card = card_list[idx];
 				YGOJSONStruct json_struct = json_list[idx];
 				card.m_rarity = json_struct.rarity;
 				cards.Add(card);
@@ -232,6 +234,7 @@ namespace YGOPRODraft
 							}
 							catch
 							{
+								System.Console.WriteLine("Error: couldn't find " + new_name + " in YGOPRO database!");
 							}
 						}
 					}
@@ -241,14 +244,103 @@ namespace YGOPRODraft
 			{
 			}
 
+			var card_list = QueryFromIDList(ids, ygopro_path);
+
 			for (int idx = 0; idx < ids.Count; idx++)
 			{
 				int id = ids[idx];
-				YGOPROCard card = QueryFromID(id, ygopro_path);
+				YGOPROCard card = card_list[idx];
 				cards.Add(card);
 			}
 
 			return cards;
+		}
+
+		public static List<YGOPROCard> QueryFromIDList(List<int> ids, String ygopro_path)
+		{
+			List<YGOPROCard> ret_list = new List<YGOPROCard>();
+			
+			try
+			{
+				using (SQLiteConnection connect = new SQLiteConnection("Data Source=" + ygopro_path))
+				{
+					connect.Open();
+
+					foreach (var id in ids)
+					{
+						YGOPROCard ret_card = new YGOPROCard();
+						ret_card.m_ygopro_id = id;
+
+						using (SQLiteCommand fmd = connect.CreateCommand())
+						{
+							fmd.CommandText = "SELECT name, desc from texts where id = " + id;
+							fmd.CommandType = CommandType.Text;
+
+							SQLiteDataReader r = fmd.ExecuteReader();
+							try
+							{
+								if (r.Read())
+								{
+									ret_card.m_card_name = r.GetString(0);
+									ret_card.m_card_desc = r.GetString(1);
+								}
+							}
+							catch
+							{
+							}
+						}
+
+						using (SQLiteCommand fmd = connect.CreateCommand())
+						{
+							fmd.CommandText = "SELECT type, atk, def, level, race, attribute from datas where id = " + id;
+							fmd.CommandType = CommandType.Text;
+
+							SQLiteDataReader r = fmd.ExecuteReader();
+							try
+							{
+								if (r.Read())
+								{
+									if (CARD_TYPE_MAP.ContainsKey(r.GetInt32(0)))
+										ret_card.m_card_type = CARD_TYPE_MAP[r.GetInt32(0)];
+									else
+										ret_card.m_card_type = "UNKNOWN";
+
+									ret_card.m_card_atk = r.GetInt32(1);
+									ret_card.m_card_def = r.GetInt32(2);
+									ret_card.m_card_level = r.GetInt32(3);
+									int test = r.GetInt32(0);
+									ret_card.m_card_extra = (r.GetInt32(0) & YGOPROCard.ygoproIsExtraDeck) > 1;
+									if (CARD_RACE_MAP.ContainsKey(r.GetInt32(4)))
+										ret_card.m_card_race = CARD_RACE_MAP[r.GetInt32(4)];
+									else
+										ret_card.m_card_race = "UNKNOWN";
+
+									if (CARD_ATTR_MAP.ContainsKey(r.GetInt32(5)))
+										ret_card.m_card_attr = CARD_ATTR_MAP[r.GetInt32(5)];
+									else
+										ret_card.m_card_attr = "UNKNOWN";
+								}
+							}
+							catch
+							{
+							}
+						}
+
+						ret_list.Add(ret_card);
+					}
+
+					
+				}
+			}
+			catch
+			{
+			}
+
+			//get img from ygopro path
+			//String trimmed = ygopro_path.TrimEnd("cards.cdb".ToCharArray());
+			//ret_card.m_card_image = Image.FromFile(trimmed +"\\pics\\" + id.ToString() + ".jpg");
+
+			return ret_list;
 		}
 
 		public static YGOPROCard QueryFromID(int id, String ygopro_path)

@@ -262,6 +262,9 @@ namespace YGOPRODraft
 			string[] files = Directory.GetFiles(CONSTANTS.ADD_PACKS_FOLDER);
 			List<List<YGOPROCard>> list_of_card_lists = new List<List<YGOPROCard>>();
 
+			var card_name_to_LOTD_ID = FileUtilities.GetCardIDToLOTDMapFromCSV(CONSTANTS.CSV_MAP_FILENAME);
+			var LOTD_ID_to_card_name = FileUtilities.ReverseDict(card_name_to_LOTD_ID);
+
 			foreach (string filename in files)
 			{
 				if (ChosenPacks[filename.Split('\\')[1]] == false)
@@ -283,8 +286,7 @@ namespace YGOPRODraft
 					try
 					{
 						byte[] ydc_binary = FileUtilities.parseCardListMainExtraSideFromYDCFile(filename);
-						var list_of_main_extra_side = FileUtilities.YDCToYGOPRODeck(ydc_binary,
-							FileUtilities.ReverseDict(FileUtilities.GetCardIDToLOTDMapFromCSV(CONSTANTS.CSV_MAP_FILENAME)),
+						var list_of_main_extra_side = FileUtilities.YDCToYGOPRODeck(ydc_binary, LOTD_ID_to_card_name,
 							CONSTANTS.CARD_DB_FILENAME);
 						foreach (var deck in list_of_main_extra_side)
 						{
@@ -312,7 +314,6 @@ namespace YGOPRODraft
 				return;
 			}
 
-			var card_name_to_LOTD_ID = FileUtilities.GetCardIDToLOTDMapFromCSV(CONSTANTS.CSV_MAP_FILENAME);
 
 			LogOut(FileUtilities.WriteBattlePackBinFile(Path.Combine(CONSTANTS.PATCHED_YGODATA_OUT_FOLDER, CONSTANTS.BATTLEPACK_1_FILENAME),
 				CONSTANTS.BATTLEPACK_NUM_CATEGORIES, list_of_card_lists, card_name_to_LOTD_ID));
@@ -398,7 +399,7 @@ namespace YGOPRODraft
 				//Path is wrong or not set, ask for re-enter
 				FolderBrowserDialog fbd = new FolderBrowserDialog();
 				fbd.SelectedPath = Environment.CurrentDirectory;
-				fbd.Description = "Choose your Yu-Gi-Oh: Legacy of the Duelist installation path! (Contains YuGiOh.exe, YGO_DATA.dat and YGO_DATA.toc)";
+				fbd.Description = "Choose your Yu-Gi-Oh: Legacy of the Duelist Link Evolution installation path! (Contains YuGiOh.exe, YGO_2020.dat and YGO_2020.toc)";
 				fbd.ShowDialog();
 				programSettings.LOTDPath = fbd.SelectedPath;
 				if (programSettings.LOTDPath == ""
@@ -434,7 +435,7 @@ namespace YGOPRODraft
 			}
 			else
 			{
-				LogOut("card_map.csv found!");
+				LogOut(CONSTANTS.CSV_MAP_FILENAME + " found!");
 			}
 
 			//Check if cards.cdb is there
@@ -445,20 +446,9 @@ namespace YGOPRODraft
 			}
 			else
 			{
-				LogOut("cards.cdb found!");
+				LogOut(CONSTANTS.CARD_DB_FILENAME + " found!");
 			}
-
-			//Check if cards_not_available is there
-			if (!CheckPathContainsFile("", CONSTANTS.CARDS_NOT_AVAILABLE))
-			{
-				MessageBox.Show("Error: " + CONSTANTS.CARDS_NOT_AVAILABLE + " is missing, but we definitely need that or the game breaks with those cards :(\nRedownload this tool, as that file should come with it!");
-				Application.Exit();
-			}
-			else
-			{
-				LogOut("card_map.csv found!");
-			}
-
+			
 			//Check if PUT_YOUR_DECKS_HERE folder is there, otherwise create it
 			if (!Directory.Exists(CONSTANTS.ADD_PACKS_FOLDER))
 			{
