@@ -1,6 +1,9 @@
 # YGOLOTDPatchDraft
 Patching Tool for Yu-Gi-Oh: Legacy of the Duelist (LOTD) to automatically change the Battle Pack 1 draft pool and AI decks.
 
+# Link Evolution
+The Releases section also provides a built binary for LOTD: Link Evolution (2020). The code for this can be found in the `link_evolution_2020` branch.
+
 # Features
 Supports .ydk (YGOPRO) or .ydc (directly from LOTD) deck files for the enemy AI decks, and .ydk (YGOPRO) or .json (Booster) files for the packs from which the draft/sealed cards are drawn.
 
